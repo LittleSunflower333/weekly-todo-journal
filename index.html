@@ -6,6 +6,67 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="以周为单位，记录每天的待办与生活。">
   <title>一周 · Weekly</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    // Apply UI preferences before first paint; never read or write weekly data here.
+    (() => {
+      const themes = [['classic','Classic'],['royal-bone','Royal Bone'],['lake-sunset','Lake Sunset'],['sapphire-rose','Sapphire Rose'],['periwinkle-citron','Periwinkle Citron'],['orange-slate','Orange Slate'],['khaki-red','Khaki Red']];
+      const defaults = {theme:'classic',colorMode:'minimal',todayHighlight:'soft'};
+      const allowed = {theme:themes.map(([id])=>id),colorMode:['minimal','soft'],todayHighlight:['off','soft','standard']};
+      const preferences = {...defaults};
+      for (const key of Object.keys(defaults)) {
+        try { const saved = localStorage.getItem(`weekly.${key}`); if (allowed[key].includes(saved)) preferences[key] = saved; } catch {}
+      }
+      const apply = () => {
+        document.documentElement.dataset.theme = preferences.theme;
+        document.documentElement.dataset.colorMode = preferences.colorMode;
+        document.documentElement.dataset.todayHighlight = preferences.todayHighlight;
+      };
+      apply();
+      document.addEventListener('DOMContentLoaded', () => {
+        const panel = document.getElementById('appearance-panel');
+        const triggers = [...document.querySelectorAll('[data-appearance-trigger]')];
+        let anchor = triggers[0];
+        panel.innerHTML = `<h2>外观</h2><fieldset><legend>主题</legend>${themes.map(([id,name])=>`<label class="theme-option"><input type="radio" name="theme" value="${id}"><span>${name}</span><span class="theme-swatches" data-theme="${id}" aria-hidden="true"><i></i><i></i><i></i></span></label>`).join('')}</fieldset>
+          <fieldset><legend>今日高亮</legend><div class="appearance-segment">${[['off','关闭'],['soft','柔和'],['standard','标准']].map(([id,name])=>`<label><input type="radio" name="todayHighlight" value="${id}">${name}</label>`).join('')}</div></fieldset>
+          <fieldset><legend>色彩模式</legend><div class="appearance-segment">${[['minimal','极简'],['soft','柔和']].map(([id,name])=>`<label><input type="radio" name="colorMode" value="${id}">${name}</label>`).join('')}</div></fieldset>
+          <button type="button" class="appearance-reset">恢复默认</button><p class="appearance-error" role="status" hidden></p>`;
+        const sync = () => panel.querySelectorAll('input').forEach(input=>{input.checked = preferences[input.name] === input.value;});
+        const persist = () => {
+          apply(); sync();
+          try {
+            for (const key of Object.keys(defaults)) localStorage.setItem(`weekly.${key}`,preferences[key]);
+            panel.querySelector('.appearance-error').hidden = true;
+          } catch {
+            const error = panel.querySelector('.appearance-error'); error.hidden = false; error.textContent = '当前浏览器无法保存外观偏好，刷新后可能恢复默认。';
+          }
+        };
+        const position = () => {
+          const rect = anchor.getBoundingClientRect();
+          panel.style.left = `${Math.max(12,Math.min(rect.right + 12,innerWidth-panel.offsetWidth-12))}px`;
+          panel.style.top = `${Math.max(12,Math.min(rect.bottom-panel.offsetHeight,innerHeight-panel.offsetHeight-12))}px`;
+        };
+        triggers.forEach(trigger=>trigger.addEventListener('click',()=>{
+          anchor = trigger;
+          if (panel.matches(':popover-open')) panel.hidePopover();
+          else {sync();panel.showPopover();position();}
+        }));
+        panel.addEventListener('toggle',()=>{
+          const isOpen = panel.matches(':popover-open');
+          triggers.forEach(trigger=>trigger.setAttribute('aria-expanded',String(isOpen)));
+          if(isOpen) position();
+        });
+        panel.addEventListener('change',event=>{
+          const {name,value} = event.target;
+          if(allowed[name]?.includes(value)){preferences[name]=value;persist();}
+        });
+        panel.querySelector('.appearance-reset').addEventListener('click',()=>{Object.assign(preferences,defaults);persist();});
+        window.addEventListener('resize',()=>{if(panel.matches(':popover-open')) position();});
+        panel.addEventListener('keydown',event=>{if(event.key==='Escape')anchor.focus();});
+        sync();
+      });
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
@@ -17,8 +78,11 @@
     <button class="home-button" id="go-today"><span class="mini-calendar">▦</span> 本周 <span class="nav-dot"></span></button>
     <div class="nav-caption">时间档案 <span>ARCHIVE</span></div>
     <nav id="archive" aria-label="按年月浏览周记"></nav>
+    <div class="appearance-slot"><button class="appearance-trigger" data-appearance-trigger aria-controls="appearance-panel" aria-expanded="false" aria-haspopup="dialog"><span aria-hidden="true">🎨</span> 外观</button></div>
     <div class="sidebar-bottom"><div class="local-label"><span></span> 只属于你的记录</div><p>本地 JSON · 自动保存</p></div>
   </aside>
+  <button class="appearance-trigger appearance-floating" data-appearance-trigger aria-label="外观" title="外观" aria-controls="appearance-panel" aria-expanded="false" aria-haspopup="dialog">🎨</button>
+  <section id="appearance-panel" class="appearance-panel" popover="auto" role="dialog" aria-label="外观"></section>
   <div class="workspace">
     <header class="topbar"><div class="breadcrumb"><button id="menu-toggle" aria-controls="sidebar" aria-label="展开时间导航" aria-expanded="false">☰</button><span>个人空间</span><span class="slash">/</span><strong>周记</strong></div><div class="top-actions"><div class="save-status" id="save-status" role="status"><span></span> 正在读取本地记录…</div><button class="primary-button top-add" id="add-week" aria-label="新增下一周" title="新增下一周"><span aria-hidden="true">＋</span></button></div></header>
     <main>

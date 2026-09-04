@@ -13,6 +13,12 @@ npm start
 
 然后打开 <http://localhost:4173>。停止服务可在终端按 `Control-C`。
 
+## 外观
+
+左侧时间导航底部的「🎨 外观」可切换 Classic 和六套预设配色，并调整今日高亮与色彩模式。侧栏收起时，左下角仍保留外观图标。点击面板外或按 Esc 关闭，使用「恢复默认」回到 Classic／柔和今日高亮／极简模式。
+
+偏好仅保存在当前浏览器的 `weekly.theme`、`weekly.colorMode`、`weekly.todayHighlight` 中，不访问周记接口，也不写入 JSON。
+
 ## 数据位置
 
 - `data/index.json`：轻量周索引，按日期倒序排列。

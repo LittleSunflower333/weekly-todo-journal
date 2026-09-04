@@ -7,7 +7,7 @@ const crypto = require('node:crypto');
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86400000;
-const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml' };
 
 function parseDate(value) {
   if (!DATE_RE.test(value)) return null;
@@ -193,7 +193,7 @@ function createApp({ dataDir = path.join(__dirname, 'data'), publicDir = __dirna
       if (url.pathname.startsWith('/api/')) return sendJson(404, { error: '接口不存在' });
 
       const staticName = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
-      if (!['index.html', 'styles.css', 'app.js'].includes(staticName)) { response.writeHead(404); return response.end('Not found'); }
+      if (!['index.html', 'styles.css', 'app.js', 'favicon.svg'].includes(staticName)) { response.writeHead(404); return response.end('Not found'); }
       const file = path.join(publicDir, staticName);
       const content = await fs.readFile(file);
       response.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });

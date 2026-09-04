@@ -93,6 +93,7 @@ function initApp() {
     clearTimeout(saveTimers.get(week.startDate));
     const perform = () => {
       const snapshot = JSON.parse(JSON.stringify(week));
+      snapshot.days.forEach(day => { day.tasks = day.tasks.filter(task => !transientTodos.has(task.id)); });
       const previous = writeChains.get(week.startDate) || Promise.resolve();
       const current = previous.catch(() => {}).then(async () => {
         setSaveStatus('saving', '正在保存…');
@@ -112,7 +113,7 @@ function initApp() {
 
   function autoSize(root = document) {
     root.querySelectorAll('textarea').forEach(el => {
-      if (el.dataset.field === 'note' || !el.getClientRects().length) return;
+      if (!el.getClientRects().length) return;
       el.style.height = 'auto';
       el.style.height = `${Math.max(el.scrollHeight, el.classList.contains('todo-text') ? 23 : 30)}px`;
     });
@@ -148,7 +149,7 @@ function initApp() {
       </div>
       ${opened.has(start) ? `<div class="week-body"><section class="focus-block"><label class="section-label" for="focus-${start}"><span class="sun">☀</span> 本周重点</label><textarea id="focus-${start}" data-field="focus" rows="2" placeholder="这周，最想做好哪几件事？">${escape(week.focus.join('\n'))}</textarea></section>
       <div class="days-heading" aria-hidden="true"><span>日期</span><span>待办事项</span><span>🌱 每日随笔</span></div>
-      <div class="days">${week.days.map((day, i) => `<section class="day-row ${day.date === today ? 'today-row' : ''} ${i > 4 ? 'weekend' : ''}" data-day="${day.date}" id="day-${day.date}"><div class="day-date"><div class="day-name">${DAY_NAMES[i]}${day.date === today ? '<span class="today-pill">今天</span>' : ''}</div><time class="day-number" datetime="${day.date}" title="${day.date}"><span class="date-month">${day.date.slice(5, 7)} / </span>${day.date.slice(8)}</time></div><div class="tasks"><div class="todo-list">${day.tasks.map(renderTodo).join('')}</div><button class="add-todo" data-action="add-todo" aria-label="给${DAY_NAMES[i]}添加待办" title="添加待办">＋ 添加待办</button></div><div class="journal"><span class="journal-leaf" aria-hidden="true">🌱</span><button class="journal-preview" data-action="edit-journal" aria-label="编辑${DAY_NAMES[i]}的记录" title="点击编辑"><span class="journal-preview-text ${day.note ? '' : 'is-empty'}">${escape(day.note) || '记下此刻的心情、生活或想法…'}</span></button><textarea id="note-${day.date}" data-field="note" aria-label="编辑${DAY_NAMES[i]}的记录" placeholder="记下此刻的心情、生活或想法…">${escape(day.note)}</textarea></div></section>`).join('')}</div>
+      <div class="days">${week.days.map((day, i) => `<section class="day-row ${day.date === today ? 'today-row' : ''} ${i > 4 ? 'weekend' : ''}" data-day="${day.date}" id="day-${day.date}"><div class="day-date"><div class="day-name">${DAY_NAMES[i]}${day.date === today ? '<span class="today-pill">今天</span>' : ''}</div><time class="day-number" datetime="${day.date}" title="${day.date}"><span class="date-month">${day.date.slice(5, 7)} / </span>${day.date.slice(8)}</time></div><div class="tasks"><div class="todo-list">${day.tasks.map(renderTodo).join('')}</div><button class="add-todo" data-action="add-todo" aria-label="给${DAY_NAMES[i]}添加待办" title="添加待办">＋ 添加待办</button></div><div class="journal"><span class="journal-leaf">🌱 随笔</span><button class="journal-preview" data-action="edit-journal" aria-label="编辑${DAY_NAMES[i]}的记录" title="点击编辑"><span class="journal-preview-text ${day.note ? '' : 'is-empty'}">${escape(day.note) || '记下此刻的心情、生活或想法…'}</span></button><textarea id="note-${day.date}" data-field="note" aria-label="编辑${DAY_NAMES[i]}的记录" placeholder="记下此刻的心情、生活或想法…">${escape(day.note)}</textarea></div></section>`).join('')}</div>
       <section class="review"><div class="review-heading"><span>↳</span> 本周小结</div><div class="review-grid">${[['highlight','亮点','有什么值得为自己开心的？'],['blocked','卡住的问题','什么事还需要一点时间？'],['nextWeek','下周要关注','把一点期待留给下周。']].map(([key,title,placeholder]) => `<div class="review-cell"><label for="${key}-${start}"><i></i>${title}</label><textarea id="${key}-${start}" data-summary="${key}" rows="2" placeholder="${placeholder}">${escape(week.summary[key])}</textarea></div>`).join('')}</div></section></div>` : ''}
     </article>`;
   }
@@ -195,7 +196,10 @@ function initApp() {
   $('#weeks').addEventListener('input', event => {
     const el = event.target, { week, day, todo } = context(el);
     if (!week) return;
-    if (el.classList.contains('todo-text') && todo) todo.text = el.value;
+    if (el.classList.contains('todo-text') && todo) {
+      todo.text = el.value;
+      if (!transientTodos.has(todo.id)) saveWeek(week);
+    }
     else if (el.dataset.field === 'focus') { week.focus = el.value.split('\n').map(line => line.trim()).filter(Boolean); saveWeek(week); }
     else if (el.dataset.field === 'note' && day) { day.note = el.value; saveWeek(week); }
     else if (el.dataset.summary) { week.summary[el.dataset.summary] = el.value; saveWeek(week); }
@@ -256,7 +260,7 @@ function initApp() {
       day.tasks = day.tasks.filter(item => item.id !== todo.id); transientTodos.delete(todo.id); render(); saveWeek(week, true);
     } else if (button.dataset.action === 'edit-journal') {
       const journal = button.closest('.journal'); journal.classList.add('is-editing');
-      const textarea = journal.querySelector('textarea'); textarea.focus(); textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      const textarea = journal.querySelector('textarea'); textarea.focus(); autoSize(journal); textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     } else if (button.dataset.action === 'delete-week') openDeleteModal(week);
   });
 
