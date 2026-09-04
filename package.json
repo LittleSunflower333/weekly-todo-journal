@@ -1,0 +1,15 @@
+{
+  "name": "weekly-todo-journal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "本地优先的 Weekly Todo + Journal",
+  "scripts": {
+    "setup": "node scripts/init-data.js",
+    "start": "node server.js",
+    "check": "node scripts/check-data.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

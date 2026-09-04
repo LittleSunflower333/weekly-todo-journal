@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="以周为单位，记录每天的待办与生活。">
+  <title>一周 · Weekly</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-layout="columns">
+  <aside class="sidebar" id="sidebar">
+    <button id="sidebar-collapse" aria-label="收起时间导航" title="收起时间导航">‹</button>
+    <a class="brand" href="#" aria-label="一周，回到本周"><span class="brand-mark">w<span>·</span></span><span>一周<span class="brand-en">WEEKLY</span></span></a>
+    <button class="search-trigger" id="search-open"><span class="search-icon">⌕</span> 搜索所有记录 <kbd>⌘ K</kbd></button>
+    <button class="home-button" id="go-today"><span class="mini-calendar">▦</span> 本周 <span class="nav-dot"></span></button>
+    <div class="nav-caption">时间档案 <span>ARCHIVE</span></div>
+    <nav id="archive" aria-label="按年月浏览周记"></nav>
+    <div class="sidebar-bottom"><div class="local-label"><span></span> 只属于你的记录</div><p>本地 JSON · 自动保存</p></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div class="breadcrumb"><button id="menu-toggle" aria-controls="sidebar" aria-label="展开时间导航" aria-expanded="false">☰</button><span>个人空间</span><span class="slash">/</span><strong>周记</strong></div><div class="top-actions"><div class="save-status" id="save-status" role="status"><span></span> 正在读取本地记录…</div><button class="primary-button top-add" id="add-week" aria-label="新增下一周" title="新增下一周"><span aria-hidden="true">＋</span></button></div></header>
+    <main>
+      <div id="weeks"><div class="empty-state">正在读取本地记录…</div></div>
+      <button class="load-more" id="load-more">↓ &nbsp;加载更早记录</button>
+      <footer>一周一页，慢慢来。<span class="footer-dots"><i></i><i></i><i></i></span></footer>
+    </main>
+  </div>
+  <dialog id="modal"><div id="modal-content"></div></dialog>
+  <div id="toast" role="status"></div>
+</body>
+</html>
